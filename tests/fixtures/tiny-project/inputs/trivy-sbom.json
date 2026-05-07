@@ -1,0 +1,51 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "tiny-project-trivy",
+  "documentNamespace": "https://example.org/sbom/tiny-project/trivy",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: trivy-0.52.0"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.32.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "Copyright Kenneth Reitz",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:pypi/requests@2.32.0"},
+        {"referenceCategory": "SECURITY",
+         "referenceType": "advisory",
+         "referenceLocator": "GHSA-xxxx-xxxx-xxxx"}
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-urllib3",
+      "name": "urllib3",
+      "versionInfo": "2.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:pypi/urllib3@2.2.0"}
+      ]
+    }
+  ],
+  "files": [],
+  "relationships": [
+    {"spdxElementId": "SPDXRef-DOCUMENT",
+     "relatedSpdxElement": "SPDXRef-Package-requests",
+     "relationshipType": "DESCRIBES"}
+  ]
+}

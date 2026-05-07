@@ -1,0 +1,33 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "tiny-project-dependency-graph",
+  "documentNamespace": "https://example.org/sbom/tiny-project/dep-graph",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: github-rest-api"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-certifi",
+      "name": "certifi",
+      "versionInfo": "2024.7.4",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MPL-2.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:pypi/certifi@2024.7.4"}
+      ]
+    }
+  ],
+  "files": [],
+  "relationships": [
+    {"spdxElementId": "SPDXRef-DOCUMENT",
+     "relatedSpdxElement": "SPDXRef-Package-certifi",
+     "relationshipType": "DESCRIBES"}
+  ]
+}

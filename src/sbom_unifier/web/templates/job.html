@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Job: {{ job.job_id }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>&#x1F4CB; Job Details</h2>
+    <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div>
+            <strong>Job ID:</strong> {{ job.job_id }}
+        </div>
+        <div>
+            <strong>Status:</strong>
+            <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+        </div>
+        <div>
+            <strong>URL:</strong> <a href="{{ job.url }}" target="_blank">{{ job.url }}</a>
+        </div>
+        <div>
+            <strong>Tools:</strong> {{ job.tools | join(', ') }}
+        </div>
+    </div>
+
+    {% if job.error %}
+    <div class="flash error">{{ job.error }}</div>
+    {% endif %}
+
+    {% if job.status == 'completed' %}
+    <div style="display:flex; gap:0.8rem; margin-bottom:1rem;">
+        <a href="{{ url_for('download_sbom', job_id=job.job_id) }}" class="btn btn-success">
+            &#x2B07; Download unified SBOM
+        </a>
+        <a href="{{ url_for('download_all', job_id=job.job_id) }}" class="btn btn-secondary">
+            &#x1F4E6; Download all files as ZIP
+        </a>
+        <a href="{{ url_for('job_statistics', job_id=job.job_id) }}" class="btn btn-primary">
+            &#x1F4CA; View analysis results
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>&#x1F4DC; Execution log</h2>
+    <div class="log-area" id="logArea">
+        {% for line in job.logs %}{{ line }}
+{% endfor %}
+    </div>
+</div>
+
+{% if job.status == 'running' %}
+<div style="text-align:center; margin:1rem;">
+    <div class="badge badge-running" style="font-size:1rem; padding:0.5rem 1rem;">
+        &#x23F3; Running... auto-refreshing
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if job.status == 'running' %}
+<script>
+const logArea = document.getElementById('logArea');
+let lastLogCount = {{ job.logs | length }};
+
+function pollStatus() {
+    fetch("{{ url_for('api_job_status', job_id=job.job_id) }}")
+        .then(r => r.json())
+        .then(data => {
+            // Update log
+            if (data.logs.length > lastLogCount) {
+                const newLogs = data.logs.slice(lastLogCount);
+                newLogs.forEach(line => {
+                    logArea.textContent += line + '\n';
+                });
+                lastLogCount = data.logs.length;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+
+            // Reload when status changes
+            if (data.status !== 'running') {
+                location.reload();
+            } else {
+                setTimeout(pollStatus, 2000);
+            }
+        })
+        .catch(() => {
+            setTimeout(pollStatus, 5000);
+        });
+}
+
+setTimeout(pollStatus, 2000);
+// Initial scroll to bottom
+logArea.scrollTop = logArea.scrollHeight;
+</script>
+{% endif %}
+{% endblock %}

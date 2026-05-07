@@ -1,0 +1,34 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "tiny-project-custom",
+  "documentNamespace": "https://example.org/sbom/tiny-project/custom",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: manual"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.32.0",
+      "comment": "Manually verified",
+      "downloadLocation": "https://pypi.org/simple/requests/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright 2014 Kenneth Reitz",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:pypi/requests@2.32.0"}
+      ]
+    }
+  ],
+  "files": [],
+  "relationships": [
+    {"spdxElementId": "SPDXRef-DOCUMENT",
+     "relatedSpdxElement": "SPDXRef-Package-requests",
+     "relationshipType": "DESCRIBES"}
+  ]
+}

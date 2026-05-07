@@ -1,0 +1,202 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "tiny-project",
+  "documentNamespace": "https://example.org/sbom/tiny-project/<uuid>",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": [
+      "Tool: Microsoft.SBOMTool-2.2.6",
+      "Tool: github-rest-api",
+      "Tool: syft-1.7.0",
+      "Tool: trivy-0.52.0",
+      "Tool: manual",
+      "Tool: SBOM unifier"
+    ]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-RootPackage",
+      "name": "tiny-project",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/tiny-project@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.32.0",
+      "downloadLocation": "https://pypi.org/simple/requests/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright Kenneth Reitz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/requests@2.32.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:requests:requests:2.32.0:*:*:*:*:*:*:*"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "GHSA-xxxx-xxxx-xxxx"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Fields (licenseConcluded, licenseDeclared) were supplemented by syft.",
+          "spdxElementId": "SPDXRef-Package-requests"
+        },
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Fields (copyrightText) were supplemented by trivy.",
+          "spdxElementId": "SPDXRef-Package-requests"
+        },
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "WARNING: Conflict in 'copyrightText'. Kept 'Copyright Kenneth Reitz'. Ignored 'Copyright 2014 Kenneth Reitz' from manual.",
+          "spdxElementId": "SPDXRef-Package-requests"
+        },
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Fields (downloadLocation, comment) were supplemented by manual.",
+          "spdxElementId": "SPDXRef-Package-requests"
+        }
+      ],
+      "comment": "Manually verified"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-certifi",
+      "name": "certifi",
+      "versionInfo": "2024.7.4",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MPL-2.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/certifi@2024.7.4"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Package (purl: pkg:pypi/certifi@2024.7.4) added from github.",
+          "spdxElementId": "SPDXRef-Package-certifi"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-urllib3",
+      "name": "urllib3",
+      "versionInfo": "2.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/urllib3@2.2.0"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Package (purl: pkg:pypi/urllib3@2.2.0) added from syft.",
+          "spdxElementId": "SPDXRef-Package-urllib3"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "SPDXID": "SPDXRef-File--main.py",
+      "fileName": "./main.py",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "fileTypes": [
+        "SOURCE"
+      ],
+      "annotations": [
+        {
+          "annotationDate": "2026-01-01T00:00:00Z",
+          "annotationType": "OTHER",
+          "annotator": "Tool: SBOM unifier",
+          "comment": "Field (fileTypes) was added/updated based on file extension.",
+          "spdxElementId": "SPDXRef-File--main.py"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-RootPackage",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-RootPackage",
+      "relatedSpdxElement": "SPDXRef-Package-requests",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-RootPackage",
+      "relatedSpdxElement": "SPDXRef-Package-certifi",
+      "relationshipType": "DESCRIBES",
+      "comment": "Relationship added from github."
+    },
+    {
+      "spdxElementId": "SPDXRef-RootPackage",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3",
+      "relationshipType": "DEPENDS_ON",
+      "comment": "Relationship added from syft."
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-requests",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3",
+      "relationshipType": "DEPENDS_ON",
+      "comment": "Transitive relationship added from syft."
+    }
+  ]
+}

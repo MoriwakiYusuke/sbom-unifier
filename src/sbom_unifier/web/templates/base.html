@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <title>SBOM Unifier</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: #f5f6fa;
+            color: #2d3436;
+            line-height: 1.6;
+        }
+        .navbar {
+            background: #2d3436;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .navbar h1 { font-size: 1.3rem; font-weight: 600; }
+        .navbar a {
+            color: #dfe6e9;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .navbar a:hover { background: rgba(255,255,255,0.1); }
+        .navbar a.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #0984e3;
+            color: #0984e3;
+        }
+        .flash {
+            padding: 0.8rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .flash.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .flash.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        input[type="text"], input[type="password"], input[type="url"], select, textarea {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0984e3;
+            box-shadow: 0 0 0 3px rgba(9,132,227,0.1);
+        }
+        .form-group { margin-bottom: 1rem; }
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #0984e3; color: #fff; }
+        .btn-primary:hover { background: #0773c5; }
+        .btn-secondary { background: #636e72; color: #fff; }
+        .btn-secondary:hover { background: #535c60; }
+        .btn-success { background: #00b894; color: #fff; }
+        .btn-success:hover { background: #009d7e; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 0.5rem 0.7rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th { background: #f8f9fa; font-weight: 600; position: sticky; top: 0; }
+        tr:hover { background: #f8f9fa; }
+        .table-scroll { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-full { background: #d4edda; color: #155724; }
+        .badge-part { background: #fff3cd; color: #856404; }
+        .badge-miss { background: #f8d7da; color: #721c24; }
+        .badge-running { background: #d1ecf1; color: #0c5460; }
+        .badge-completed { background: #d4edda; color: #155724; }
+        .badge-failed { background: #f8d7da; color: #721c24; }
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+        }
+        .sortable-list li {
+            padding: 0.6rem 1rem;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .sortable-list li:active { cursor: grabbing; }
+        .drag-handle { color: #999; font-size: 1.2rem; }
+        .log-area {
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 0.8rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .token-display {
+            font-family: monospace;
+            letter-spacing: 0.05em;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .navbar { flex-wrap: wrap; gap: 0.5rem; }
+        }
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+        .chart-bar .bar {
+            height: 20px;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .bar-full { background: #00b894; }
+        .bar-part { background: #fdcb6e; }
+        .bar-miss { background: #e17055; }
+        .stacked-bar {
+            display: flex;
+            height: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .stacked-bar > div { transition: width 0.3s; }
+        .stat-label { min-width: 200px; font-size: 0.85rem; }
+        .stat-value { font-size: 0.8rem; color: #636e72; min-width: 60px; text-align: right; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <h1>&#x1F4E6; SBOM Unifier</h1>
+        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Home</a>
+        <a href="{{ url_for('jobs_list') }}" class="{% if request.endpoint == 'jobs_list' %}active{% endif %}">Job History</a>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}SBOM Unifier - Home{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <!-- Left column: Settings & Run -->
+    <div>
+        <!-- GitHub Token settings -->
+        <div class="card" style="padding:1rem; margin-bottom:1rem;">
+            <h2>&#x2699;&#xFE0F; GitHub Token</h2>
+            <form method="POST" action="{{ url_for('save_token') }}">
+                <div class="form-group" style="margin-bottom:0.6rem;">
+                    <label for="github_token">GITHUB_TOKEN</label>
+                    <input type="password" id="github_token" name="github_token"
+                           value="{{ github_token }}" placeholder="ghp_xxxxxxxxxxxx (optional)">
+                    <small style="color:#636e72;">Optional. Public repos work without it (rate-limited). Token enables private repos and higher rate limit.</small>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">Save</button>
+                <button type="button" class="btn btn-sm" onclick="toggleTokenVisibility()" style="background:#dfe6e9;">&#x1F441; Toggle visibility</button>
+            </form>
+        </div>
+
+        <!-- Pipeline run -->
+        <div class="card" style="padding:1rem;">
+            <h2>&#x1F680; Generate, Merge &amp; Analyse SBOM</h2>
+            <form method="POST" action="{{ url_for('run_route') }}" enctype="multipart/form-data" id="pipelineForm">
+                <div class="form-group" style="margin-bottom:0.6rem;">
+                    <label for="url">GitHub repository URL <span style="color:#e17055;">*</span></label>
+                    <input type="url" id="url" name="url"
+                           placeholder="https://github.com/owner/repo" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0.6rem;">
+                    <label>SBOM source tools</label>
+                    <div class="checkbox-group" style="display:flex; flex-direction:column; gap:0.3rem;">
+                        {% for tool in generators %}
+                        <div>
+                            <label title="{{ tool.description }}">
+                                <input type="checkbox" name="tools" value="{{ tool.name }}" checked>
+                                {{ tool.label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        <div data-manual-row style="display:none;">
+                            <label title="User-uploaded supplemental SBOM merged at the end (or selectable as base).">
+                                <input type="checkbox" name="tools" value="manual">
+                                Manual upload
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0.6rem;">
+                    <label for="custom_sbom">Custom SBOM (optional, JSON)</label>
+                    <!-- Fix #6: custom English file input replacing browser-locale native button -->
+                    <input type="file" id="custom_sbom" name="custom_sbom" accept=".json,application/json"
+                           style="opacity:0; position:absolute; width:1px; height:1px; overflow:hidden;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('custom_sbom').click()">Choose file</button>
+                        <span id="custom_sbom_filename" style="color:#636e72; font-size:0.9rem;">No file chosen</span>
+                        <button type="button" id="custom_sbom_reset" class="btn btn-sm" style="display:none; background:#dfe6e9; font-size:0.8rem; padding:0.2rem 0.5rem;" onclick="resetCustomSbom()">Clear</button>
+                    </div>
+                    <!-- Fix #5: block-level small text so it has full width and never wraps awkwardly -->
+                    <small style="color:#636e72; display:block; margin-top:0.3rem;">Applied only to this run.</small>
+                </div>
+
+                <!-- Merge order (submitted via hidden field) -->
+                <input type="hidden" id="merge_order_field" name="merge_order" value="">
+
+                <button type="submit" class="btn btn-primary">&#x25B6; Run</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right column: Merge order -->
+    <div>
+        <div class="card" style="padding:1rem;">
+            <h2>&#x1F500; Merge order</h2>
+            <div class="form-group" style="margin-bottom:0.6rem;">
+                <label for="base_tool">Base SBOM</label>
+                <select id="base_tool" name="base_tool" form="pipelineForm">
+                    {% for tool in base_candidates %}
+                    <option value="{{ tool.name }}" {% if base_tool_default == tool.name %}selected{% endif %}>{{ tool.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p style="font-size:0.85rem; color:#636e72; margin-bottom:0.5rem;">
+                The top item is the base. Drag and drop the rows below it to change the merge order. Changing the base resets the order.
+            </p>
+            {%- set merge_order_json %}[{% for tool in merge_order %}{"name":{{ tool.name | tojson }},"label":{{ tool.label | tojson }},"output_filename":{{ tool.output_filename | tojson }}}{% if not loop.last %},{% endif %}{% endfor %}]{% endset -%}
+            <ul class="sortable-list" id="mergeOrderList" data-default-order='{{ merge_order_json }}'>
+                <li data-fixed="true" draggable="false" style="opacity:0.9; background:#eef5ff; border-color:#bcd7ff; cursor:not-allowed;"></li>
+                {% for tool in merge_order %}
+                <li data-name="{{ tool.name }}" data-filename="{{ tool.output_filename }}" draggable="true">
+                    <span class="drag-handle">&#x2837;</span>
+                    <strong>{{ tool.label }}</strong>
+                    <span style="color:#636e72; font-size:0.8rem;">({{ tool.output_filename }})</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="resetMergeOrder()">Reset</button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Token visibility toggle
+function toggleTokenVisibility() {
+    const input = document.getElementById('github_token');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// Sync manual row / base option visibility to the file input state.
+// Also updates the filename label (replaces old Fix #6 handler).
+function syncManualVisibility() {
+    const fileInput = document.getElementById('custom_sbom');
+    const hasFile = fileInput.files && fileInput.files.length > 0;
+
+    // Update filename label
+    document.getElementById('custom_sbom_filename').textContent =
+        hasFile ? fileInput.files[0].name : 'No file chosen';
+
+    // Show/hide the manual checkbox row
+    const manualRow = document.querySelector('[data-manual-row]');
+    if (manualRow) manualRow.style.display = hasFile ? '' : 'none';
+
+    // Toggle the manual checkbox state
+    const manualCheckbox = document.querySelector('input[name="tools"][value="manual"]');
+    if (manualCheckbox) {
+        manualCheckbox.checked = hasFile;
+        manualCheckbox.disabled = !hasFile;
+    }
+
+    // Show/hide the manual option in the base dropdown
+    const manualOption = Array.from(baseToolSelect.options).find(o => o.value === 'manual');
+    if (manualOption) {
+        manualOption.hidden = !hasFile;
+        manualOption.disabled = !hasFile;
+    }
+
+    refreshMergeOrder();
+}
+
+function resetCustomSbom() {
+    const input = document.getElementById('custom_sbom');
+    input.value = '';
+    document.getElementById('custom_sbom_filename').textContent = 'No file chosen';
+    document.getElementById('custom_sbom_reset').style.display = 'none';
+    syncManualVisibility();
+}
+
+document.getElementById('custom_sbom').addEventListener('change', () => {
+    const input = document.getElementById('custom_sbom');
+    const hasFile = input.files && input.files.length > 0;
+    document.getElementById('custom_sbom_reset').style.display = hasFile ? '' : 'none';
+    syncManualVisibility();
+});
+
+// Merge order drag-and-drop
+const list = document.getElementById('mergeOrderList');
+const baseToolSelect = document.getElementById('base_tool');
+let dragItem = null;
+
+// Build base metadata from server-rendered base_candidates
+const baseMeta = {};
+{% for tool in base_candidates %}
+baseMeta[{{ tool.name | tojson }}] = {
+    label: {{ tool.label | tojson }},
+    filename: {{ tool.output_filename | tojson }},
+    mergeName: {{ tool.name | tojson }}
+};
+{% endfor %}
+
+// Default merge order from server (array of {name, label, output_filename} objects)
+const defaultMergeOrder = JSON.parse(document.getElementById('mergeOrderList').dataset.defaultOrder || '[]');
+
+function fixedRowHtml() {
+    return '<li data-fixed="true" draggable="false" style="opacity:0.9; background:#eef5ff; border-color:#bcd7ff; cursor:not-allowed;"></li>';
+}
+
+function renderBaseRow() {
+    const base = baseMeta[baseToolSelect.value];
+    const fixed = list.querySelector('li[data-fixed="true"]');
+    if (!fixed || !base) return;
+    fixed.innerHTML = `<span class="drag-handle">&#x1F512;</span><strong>${base.label} (base)</strong><span style="color:#636e72; font-size:0.8rem;">(${base.filename})</span>`;
+}
+
+// Fix #4 & #8: Refresh merge order list visibility and base dropdown options
+// based on which tools are checked and which is the current base.
+function refreshMergeOrder() {
+    const baseName = baseToolSelect.value;
+    const checked = new Set(
+        Array.from(document.querySelectorAll('input[name="tools"]:checked'))
+            .map(el => el.value)
+    );
+
+    // Update merge order list: show item iff checked AND not the current base
+    list.querySelectorAll('li[data-name]').forEach(li => {
+        const name = li.dataset.name;
+        const visible = checked.has(name) && name !== baseName;
+        li.style.display = visible ? '' : 'none';
+    });
+
+    // Update base dropdown: show/enable options only for checked tools
+    Array.from(baseToolSelect.options).forEach(opt => {
+        const usable = checked.has(opt.value);
+        opt.disabled = !usable;
+        opt.hidden = !usable;
+    });
+
+    // If selected base is now disabled, switch to first enabled option
+    if (baseToolSelect.options[baseToolSelect.selectedIndex] &&
+            baseToolSelect.options[baseToolSelect.selectedIndex].disabled) {
+        const first = Array.from(baseToolSelect.options).find(o => !o.disabled);
+        if (first) {
+            baseToolSelect.value = first.value;
+            renderBaseRow();
+            // Re-call to propagate new base into merge list
+            return refreshMergeOrder();
+        }
+    }
+
+    renderBaseRow();
+    updateMergeOrderField();
+}
+
+function currentOrderWithoutBase() {
+    const base = baseMeta[baseToolSelect.value];
+    const items = list.querySelectorAll('li[data-name][data-filename]');
+    const order = [];
+    items.forEach(item => {
+        // Only include items that are currently visible (checked and not base)
+        if (item.style.display === 'none') return;
+        if (base && item.dataset.name === base.mergeName) return;
+        order.push([item.dataset.name, item.dataset.filename]);
+    });
+    return order;
+}
+
+function renderOrderRows(order) {
+    list.innerHTML = fixedRowHtml();
+    order.forEach(entry => {
+        // entry may be a ToolEntry object (from server JSON) or a [name, filename] pair
+        const name = Array.isArray(entry) ? entry[0] : entry.name;
+        const filename = Array.isArray(entry) ? entry[1] : entry.output_filename;
+        const label = Array.isArray(entry) ? name : (entry.label || name);
+        const li = document.createElement('li');
+        li.setAttribute('draggable', 'true');
+        li.dataset.name = name;
+        li.dataset.filename = filename;
+        li.innerHTML = `<span class="drag-handle">&#x2837;</span><strong>${label}</strong><span style="color:#636e72; font-size:0.8rem;">(${filename})</span>`;
+        list.appendChild(li);
+    });
+    // After rebuilding DOM, apply visibility rules
+    refreshMergeOrder();
+}
+
+list.addEventListener('dragstart', (e) => {
+    dragItem = e.target.closest('li');
+    if (!dragItem || dragItem.dataset.fixed === 'true') {
+        e.preventDefault();
+        return;
+    }
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => dragItem.style.opacity = '0.4', 0);
+});
+
+list.addEventListener('dragend', (e) => {
+    if (!dragItem) return;
+    dragItem.style.opacity = '1';
+    dragItem = null;
+    updateMergeOrderField();
+});
+
+list.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (!dragItem) return;
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('li');
+    if (target && target !== dragItem) {
+        if (target.dataset.fixed === 'true') {
+            list.insertBefore(dragItem, target.nextSibling);
+            return;
+        }
+        const rect = target.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+            list.insertBefore(dragItem, target);
+        } else {
+            list.insertBefore(dragItem, target.nextSibling);
+        }
+    }
+});
+
+function updateMergeOrderField() {
+    const order = currentOrderWithoutBase();
+    document.getElementById('merge_order_field').value = JSON.stringify(order);
+}
+
+function resetMergeOrder() {
+    renderOrderRows(defaultMergeOrder);
+    // renderOrderRows calls refreshMergeOrder which calls updateMergeOrderField
+}
+
+// Fix #4 & #8: listen for checkbox and base dropdown changes
+document.querySelectorAll('input[name="tools"]').forEach(el => el.addEventListener('change', refreshMergeOrder));
+baseToolSelect.addEventListener('change', () => {
+    refreshMergeOrder();
+});
+
+// Submit: ensure merge order field is populated
+document.getElementById('pipelineForm').addEventListener('submit', () => {
+    updateMergeOrderField();
+});
+
+// Initialise on page load: apply visibility rules to server-rendered rows
+// (fix #8: hides the default base from the merge order on first render;
+//  also hides manual row/option until a file is uploaded)
+window.addEventListener('DOMContentLoaded', syncManualVisibility);
+
+// Also run immediately in case DOMContentLoaded already fired
+syncManualVisibility();
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.coverage
+.mypy_cache
+.pytest_cache
+.ruff_cache
+**/__pycache__
+**/*.egg-info
+**/*.py[cod]
+src/sbom_unifier/output/
+output/
+.env
+src/sbom_unifier/.env
+build
+dist
+docs/superpowers/

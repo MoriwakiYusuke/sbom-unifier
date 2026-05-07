@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Analysis results: {{ job.job_id }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem; display:flex; gap:0.8rem; align-items:center;">
+    <a href="{{ url_for('job_status', job_id=job.job_id) }}" class="btn btn-secondary btn-sm">&larr; Back to job details</a>
+    <span style="color:#636e72; font-size:0.85rem;">
+        Project: <strong>{{ job.url.split('/')[-1] }}</strong> ({{ job.job_id }})
+    </span>
+</div>
+
+<!-- Per-tool coverage summary -->
+{% if summary and summary.tools %}
+<div class="card">
+    <h2>&#x1F4CA; SPDX field coverage by tool</h2>
+    <p style="font-size:0.85rem; color:#636e72; margin-bottom:1rem;">
+        SPDX field coverage per tool (full = all items have a value, part = some items have a value, miss = absent/empty)
+    </p>
+
+    {% for tool, s in summary.tools.items() %}
+    <div class="chart-bar">
+        <span class="stat-label">{{ tool }}</span>
+        <div class="stacked-bar" style="flex:1;">
+            <div class="bar-full" style="width:{{ s.full_pct }}%;" title="full: {{ s.full }}/{{ s.total }} ({{ s.full_pct }}%)"></div>
+            <div class="bar-part" style="width:{{ s.part_pct }}%;" title="part: {{ s.part }}/{{ s.total }} ({{ s.part_pct }}%)"></div>
+            <div class="bar-miss" style="width:{{ s.miss_pct }}%;" title="miss: {{ s.miss }}/{{ s.total }} ({{ s.miss_pct }}%)"></div>
+        </div>
+        <span class="stat-value">{{ s.full_pct }}%</span>
+    </div>
+    {% endfor %}
+
+    <div style="margin-top:1rem; display:flex; gap:1.5rem; font-size:0.8rem;">
+        <span><span style="display:inline-block;width:12px;height:12px;background:#00b894;border-radius:2px;"></span> full &mdash; all items have a value</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#fdcb6e;border-radius:2px;"></span> part &mdash; some items have a value</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#e17055;border-radius:2px;"></span> miss &mdash; no value</span>
+    </div>
+</div>
+
+<!-- Numeric coverage summary table -->
+<div class="card">
+    <h2>&#x1F4CB; Coverage numbers</h2>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tool</th>
+                    <th>full</th>
+                    <th>part</th>
+                    <th>miss</th>
+                    <th>other</th>
+                    <th>total</th>
+                    <th>coverage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tool, s in summary.tools.items() %}
+                <tr>
+                    <td><strong>{{ tool }}</strong></td>
+                    <td><span class="badge badge-full">{{ s.full }}</span></td>
+                    <td><span class="badge badge-part">{{ s.part }}</span></td>
+                    <td><span class="badge badge-miss">{{ s.miss }}</span></td>
+                    <td>{{ s.other }}</td>
+                    <td>{{ s.total }}</td>
+                    <td><strong>{{ s.full_pct }}%</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- SPDX field comparison (status + percentage merged) -->
+{% if comparison_data %}
+<div class="card">
+    <h2>&#x1F50D; SPDX field comparison</h2>
+    <p style="font-size:0.85rem; color:#636e72; margin-bottom:0.8rem;">
+        Each cell shows the status and the percentage of items that carry a real value.
+        full = all items have a value / part = some items have a value / miss = key absent, empty, or NOASSERTION / N/A = NONE (explicit absence).
+    </p>
+    <div style="margin-bottom:0.5rem; display:flex; gap:0.5rem;">
+        <button class="btn btn-sm" onclick="filterTable('all')" style="background:#dfe6e9;">All</button>
+        <button class="btn btn-sm" onclick="filterTable('miss')" style="background:#f8d7da;color:#721c24;">Miss only</button>
+        <button class="btn btn-sm" onclick="filterTable('diff')" style="background:#fff3cd;color:#856404;">Differences</button>
+    </div>
+    <div class="table-scroll">
+        <table id="comparisonTable">
+            <thead>
+                <tr>
+                    {% for col in meta_cols %}<th>{{ col }}</th>{% endfor %}
+                    {% for col in tool_cols %}<th>{{ col }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in comparison_data %}
+                <tr>
+                    {% for col in meta_cols %}<td>{{ row[col] }}</td>{% endfor %}
+                    {% for col in tool_cols %}
+                    {% set cell = row[col] %}
+                    {% set status = cell.status %}
+                    {# NOASSERTION = "producer made no claim" → show as miss #}
+                    {% set display_status = 'miss' if status in ('NOASSERTION', 'NO') else status %}
+                    <td data-status="{{ display_status }}">
+                        {% if display_status in ('full',) or display_status == '○' %}
+                        <span class="badge badge-full">full</span>
+                        {% elif display_status in ('part',) or display_status == '△' %}
+                        <span class="badge badge-part">part</span>
+                        {% elif display_status in ('miss',) or display_status == '×' %}
+                        <span class="badge badge-miss">miss</span>
+                        {% elif display_status in ('N/A', 'NONE') %}
+                        <span class="badge" style="background:#e2e3e5;color:#383d41;">{{ display_status }}</span>
+                        {% else %}
+                        {{ display_status }}
+                        {% endif %}
+                        {% if cell.percent %}
+                        {% set pct_val = cell.percent.replace('%','') %}
+                        <span style="margin-left:0.4rem;font-size:0.8rem;font-weight:600;
+                            {% if pct_val == '100.0' %}color:#00b894;
+                            {% elif pct_val == '0.0' %}color:#e17055;
+                            {% else %}color:#b8860b;{% endif %}">{{ cell.percent }}</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <p style="color:#636e72;">No analysis results found. Verify that the SBOM analysis completed successfully during the pipeline run.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterTable(mode) {
+    const table = document.getElementById('comparisonTable');
+    if (!table) return;
+    table.querySelectorAll('tbody tr').forEach(row => {
+        if (mode === 'all') { row.style.display = ''; return; }
+        const statuses = [...row.querySelectorAll('td[data-status]')]
+            .map(td => (td.dataset.status || '').toLowerCase());
+        if (mode === 'miss') {
+            row.style.display = statuses.some(v => v === 'miss' || v === '×') ? '' : 'none';
+        } else if (mode === 'diff') {
+            const unique = [...new Set(statuses.filter(v => v !== ''))];
+            row.style.display = unique.length > 1 ? '' : 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

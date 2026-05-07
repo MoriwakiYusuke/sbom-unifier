@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}SBOM Unifier - Job History{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>&#x1F4CB; Job History</h2>
+    <p style="font-size:0.85rem; color:#636e72; margin-bottom:1rem;">
+        All pipeline jobs stored in the database (persists across restarts).
+    </p>
+
+    {% if all_jobs %}
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Repository</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Completed</th>
+                    <th>Tools</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in all_jobs %}
+                <tr>
+                    <td><code>{{ job.job_id }}</code></td>
+                    <td><a href="{{ job.url }}" target="_blank">{{ job.url.split('/')[-1] }}</a></td>
+                    <td><span class="badge badge-{{ job.status }}">{{ job.status }}</span></td>
+                    <td style="font-size:0.8rem;">{{ job.created_at }}</td>
+                    <td style="font-size:0.8rem;">{{ job.completed_at or '—' }}</td>
+                    <td>{{ job.tools | join(', ') }}</td>
+                    <td style="white-space:nowrap;">
+                        <a href="{{ url_for('job_status', job_id=job.job_id) }}" class="btn btn-primary btn-sm">&#x1F4CB; Details</a>
+                        {% if job.status == 'completed' and job.result_dir %}
+                        <a href="{{ url_for('job_statistics', job_id=job.job_id) }}" class="btn btn-secondary btn-sm">&#x1F4CA; Analysis</a>
+                        <a href="{{ url_for('download_sbom', job_id=job.job_id) }}" class="btn btn-success btn-sm">&#x2B07; SBOM</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:#636e72;">No jobs recorded yet. Run a pipeline from the home page.</p>
+    {% endif %}
+</div>
+{% endblock %}

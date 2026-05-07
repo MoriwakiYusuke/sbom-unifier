@@ -1,0 +1,62 @@
+{
+  "spdxVersion": "SPDX-2.2",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "tiny-project",
+  "documentNamespace": "https://example.org/sbom/tiny-project/sbom-tool",
+  "creationInfo": {
+    "created": "2026-01-01T00:00:00Z",
+    "creators": ["Tool: Microsoft.SBOMTool-2.2.6"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-RootPackage",
+      "name": "tiny-project",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:generic/tiny-project@0.1.0"}
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.32.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {"referenceCategory": "PACKAGE-MANAGER",
+         "referenceType": "purl",
+         "referenceLocator": "pkg:pypi/requests@2.32.0"}
+      ]
+    }
+  ],
+  "files": [
+    {
+      "SPDXID": "SPDXRef-File--main.py",
+      "fileName": "./main.py",
+      "checksums": [
+        {"algorithm": "SHA256",
+         "checksumValue": "0000000000000000000000000000000000000000000000000000000000000000"}
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {"spdxElementId": "SPDXRef-DOCUMENT",
+     "relatedSpdxElement": "SPDXRef-RootPackage",
+     "relationshipType": "DESCRIBES"},
+    {"spdxElementId": "SPDXRef-RootPackage",
+     "relatedSpdxElement": "SPDXRef-Package-requests",
+     "relationshipType": "DEPENDS_ON"}
+  ]
+}
